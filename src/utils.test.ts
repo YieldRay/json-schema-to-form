@@ -1,5 +1,5 @@
 import { Window } from "happy-dom";
-import type { HTMLElementTagNameMapToAttributes } from "./attrs.ts";
+import type { JSX } from "hono/jsx/jsx-runtime";
 
 export const window = (globalThis.window ??
   new Window()) as unknown as globalThis.Window;
@@ -9,13 +9,10 @@ export function createDocumentFragment() {
 }
 
 export function createElement<
-  K extends keyof HTMLElementTagNameMap &
-    keyof HTMLElementTagNameMapToAttributes
+  K extends keyof HTMLElementTagNameMap & keyof JSX.IntrinsicElements[K]
 >(
   tagName: K,
-  props?: Partial<
-    Record<HTMLElementTagNameMapToAttributes[K], string | number | boolean>
-  >,
+  props?: Partial<JSX.IntrinsicElements[K]>,
   children?: Iterable<Node | string | null | undefined | false>
 ): HTMLElementTagNameMap[K] {
   const element = window.document.createElement(tagName);

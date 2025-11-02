@@ -30,7 +30,7 @@ import {
   type ObjectSchema,
 } from "json-schema-to-form";
 
-const schema: ObjectSchema = {
+const schema = {
   type: "object",
   properties: {
     url: { type: "string", format: "uri" },
@@ -48,7 +48,7 @@ const schema: ObjectSchema = {
       },
     },
   },
-};
+} satisfies ObjectSchema;
 
 // Equivalent with Zod (optional):
 const S = z.object({
@@ -61,7 +61,7 @@ const S = z.object({
 });
 const schema = z.toJSONSchema(S) as ObjectSchema;
 
-const html = convertSchemaToFormString(schema, {
+const html: string = convertSchemaToFormString(schema, {
   method: "post",
   action: "/submit",
 });
@@ -118,11 +118,13 @@ Normalize submitted data (validation is app-owned):
 ```ts
 import { normalizeFormData } from "json-schema-to-form";
 
-const fd: FormData = await request.formData();
-const input = normalizeFormData(fd);
+app.post("/submit", async (c) => {
+  const fd = await c.req.formData();
+  const input = normalizeFormData(fd);
+});
 
 // If you need validation, wire up Ajv yourself (not exported by this package)
-// Example: see `src/validate.ts` in this repo for a small utility you can copy.
+// Example: see `src/validate.ts` in this repo for a utility you can copy.
 ```
 
 ## Schema metadata
@@ -141,7 +143,7 @@ You can influence rendering via JSON Schema metadata (when using `zod`, attach v
 - `RenderSchemaToHonoElements` – JSX fragment rendering only fields
 - `normalizeFormData(formData)` – turn `FormData` into a nested object
 
-Validation helpers are not exported by this package.
+Validation helpers are NOT exported by this package.
 
 ## Limitations
 
