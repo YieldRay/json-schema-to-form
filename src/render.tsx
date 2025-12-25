@@ -6,24 +6,21 @@
  */
 import type { PropsWithChildren } from "hono/jsx";
 import type { JSX } from "hono/jsx/jsx-runtime";
-import type { z } from "zod";
 // import { createElement } from "hono/jsx";
+import type { ObjectSchema, StrictObjectSchema, Meta } from "./types.ts";
+import type { JSONSchema } from "zod/v4/core";
 
 /**
- * Minimal object schema shape accepted by this renderer.
- *
- * Only `type: "object"` schemas at the root are supported; nested properties
- * follow JSON Schema conventions as produced by `z.toJSONSchema`.
+ * Re-export section
  */
-export interface ObjectSchema {
-  type: "object";
-  properties?: Record<string, any>;
-  [key: string]: any;
-}
+export type { ObjectSchema, Meta };
 
-// we use BaseSchema instead of ObjectSchema
-// as z.toJSONSchema returns BaseSchema
-type StrictObjectSchema = z.core.JSONSchema.BaseSchema;
+/**
+ * Definition helpers, return the given meta object as-is.
+ */
+export function defineMeta<T extends Meta>(meta: T): T {
+  return meta;
+}
 
 /**
  * Convert a JSON Schema object to a JSX string of form elements (no wrapping <form/>).
@@ -121,7 +118,7 @@ export function RenderSchemaToHonoElements({
             `Unsupported schema type for field "${key}", missing type`
           );
 
-        const { uiWidget, default: defaultValue, description } = value;
+        const { uiWidget, default: defaultValue, description } = value as JSONSchema.JSONSchema & Meta
         const defaultValueString =
           defaultValue == undefined ? undefined : String(defaultValue);
         const required = requiredKeys.has(key);

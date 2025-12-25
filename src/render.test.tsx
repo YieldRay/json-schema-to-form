@@ -4,7 +4,11 @@ import * as assert from "node:assert";
 import { z } from "zod";
 import { Window, HTMLFormElement } from "happy-dom";
 import { createDocumentFragment, createElement } from "./utils.test.ts";
-import { convertSchemaToFormString, type ObjectSchema } from "./render.tsx";
+import {
+  convertSchemaToFormString,
+  defineMeta,
+  type ObjectSchema,
+} from "./render.tsx";
 import { normalizeFormData } from "./payload.ts";
 
 test("test", async () => {
@@ -12,9 +16,12 @@ test("test", async () => {
     url: z.url(),
     method: z
       .enum(["GET", "POST"])
-      .meta({
-        uiWidget: "select", // or "radio"
-      })
+      .meta(
+        defineMeta({
+          uiWidget: "select", // or "radio"
+          multiple: false,
+        })
+      )
       .default("POST"),
     user: z.object({
       name: z.string().min(1).max(100),
