@@ -10,7 +10,10 @@ import { mkdirSync, writeFileSync, copyFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { convertSchemaToFormString } from "../src/render.tsx";
+// Import the library from its built output so this script stays runnable
+// with bare `node` (which strips .ts but not .tsx). Run `npm run build`
+// before `npm run build:docs`, or use the combined script.
+import { convertSchemaToFormString } from "../dist/index.mjs";
 import { schema } from "./schema.ts";
 import { zodSchema } from "./zod-schema.ts";
 import { renderPage } from "./page.ts";

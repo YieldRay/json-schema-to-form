@@ -11,7 +11,9 @@
     "!*.test.*"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "build:docs": "npm run build && node examples/build-docs.ts",
+    "test": "tsx --test src/*.test.*"
   },
   "keywords": [
     "json",
