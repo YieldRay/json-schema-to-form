@@ -207,7 +207,9 @@ form [data-name]                              { display: flex; flex-direction: c
 form [data-name] > label,
 form [data-name] > legend                     { font-weight: 600; }
 form [data-name] > small                      { color: #666; font-size: 0.875em; }
-form [data-required] > label::after,
+/* Scope to the field's own label/legend, not individual option labels
+   inside a group fieldset. */
+form [data-required]:not([data-variant="group"]) > label::after,
 form [data-required] > legend::after          { content: " *"; color: crimson; }
 
 /* Widget-specific tweaks */

@@ -1,10 +1,10 @@
 /**
- * docs/build.ts
+ * examples/build-docs.ts
  *
- * Generates a static docs site under docs/dist/. No runtime server needed —
- * the library produces HTML, so the demos are plain static pages.
+ * Generates a static docs site under examples/dist/. No runtime server
+ * needed — the library produces HTML, so the demos are plain static pages.
  *
- * Run with:   tsx docs/build.ts
+ * Run with:   tsx examples/build-docs.ts
  */
 import { mkdirSync, writeFileSync, copyFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -81,7 +81,7 @@ writeFileSync(
     body: formHTML,
     source: [
       { label: "Rendered HTML", code: prettyHTML(formHTML) },
-      { label: "docs/schema.ts", code: schemaSrc },
+      { label: "examples/schema.ts", code: schemaSrc },
     ],
   })
 );
@@ -96,7 +96,7 @@ writeFileSync(
     stylesheets: ["./styles/polished.css"],
     body: formHTML,
     source: [
-      { label: "docs/styles/polished.css", code: polishedCss },
+      { label: "examples/styles/polished.css", code: polishedCss },
       { label: "Rendered HTML (same as baseline)", code: prettyHTML(formHTML) },
     ],
   })
@@ -112,7 +112,7 @@ writeFileSync(
     stylesheets: ["./styles/simple.css"],
     body: formHTML,
     source: [
-      { label: "docs/styles/simple.css", code: simpleCss },
+      { label: "examples/styles/simple.css", code: simpleCss },
     ],
   })
 );
@@ -127,7 +127,7 @@ writeFileSync(
     stylesheets: ["./styles/utility.css"],
     body: formHTML,
     source: [
-      { label: "docs/styles/utility.css", code: utilityCss },
+      { label: "examples/styles/utility.css", code: utilityCss },
     ],
   })
 );
@@ -142,8 +142,8 @@ writeFileSync(
     stylesheets: ["./styles/polished.css"],
     body: zodFormHTML,
     source: [
-      { label: "docs/zod-schema.ts", code: zodSrc },
-      { label: "docs/schema.ts (plain JSON Schema equivalent)", code: schemaSrc },
+      { label: "examples/zod-schema.ts", code: zodSrc },
+      { label: "examples/schema.ts (plain JSON Schema equivalent)", code: schemaSrc },
     ],
   })
 );
