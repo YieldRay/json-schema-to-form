@@ -1,0 +1,257 @@
+/* ---------------------------------------------------------------
+   json-schema-to-form — default stylesheet
+   Pure tag + data-* selectors; zero class names in the markup.
+   Drop-in on any form rendered by the library.
+   --------------------------------------------------------------- */
+
+:root {
+  --jsf-bg:         #ffffff;
+  --jsf-surface:    #ffffff;
+  --jsf-surface-2:  #f7f8fa;
+  --jsf-border:     #d9dde3;
+  --jsf-border-2:   #c0c6cf;
+  --jsf-text:       #1c1f24;
+  --jsf-muted:      #5a6270;
+  --jsf-accent:     #2563eb;
+  --jsf-accent-bg:  #eff5ff;
+  --jsf-danger:     #dc2626;
+  --jsf-radius:     8px;
+  --jsf-radius-sm:  6px;
+  --jsf-gap:        10px;
+  --jsf-pad-y:      9px;
+  --jsf-pad-x:      12px;
+  --jsf-font:       system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --jsf-shadow:     0 1px 2px rgba(15, 23, 42, 0.04);
+  --jsf-focus:      0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+form {
+  font-family: var(--jsf-font);
+  color: var(--jsf-text);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  line-height: 1.45;
+}
+
+/* --- every row --- */
+form [data-name] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jsf-gap);
+}
+
+/* --- labels & legends --- */
+form [data-name] > label,
+form [data-name] > legend {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--jsf-text);
+  padding: 0;
+}
+
+/* required marker — only the field's own label/legend, not option labels */
+form [data-required]:not([data-variant="group"]) > label::after,
+form [data-required] > legend::after {
+  content: " *";
+  color: var(--jsf-danger);
+  font-weight: 700;
+}
+
+/* --- hint text --- */
+form [data-name] > small {
+  color: var(--jsf-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* --- controls (text-like) --- */
+form input,
+form select,
+form textarea {
+  font: inherit;
+  color: inherit;
+  background: var(--jsf-surface);
+  border: 1px solid var(--jsf-border);
+  border-radius: var(--jsf-radius-sm);
+  padding: var(--jsf-pad-y) var(--jsf-pad-x);
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: var(--jsf-shadow);
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+form input:hover,
+form select:hover,
+form textarea:hover {
+  border-color: var(--jsf-border-2);
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
+  outline: none;
+  border-color: var(--jsf-accent);
+  box-shadow: var(--jsf-focus);
+}
+
+form input:disabled,
+form select:disabled,
+form textarea:disabled {
+  background: var(--jsf-surface-2);
+  color: var(--jsf-muted);
+  cursor: not-allowed;
+}
+
+/* Invalid state (fires after the user has interacted) */
+form input:user-invalid,
+form select:user-invalid,
+form textarea:user-invalid {
+  border-color: var(--jsf-danger);
+}
+
+form textarea {
+  min-height: 6em;
+  resize: vertical;
+}
+
+form select[multiple] {
+  min-height: 7.5em;
+  padding: 4px;
+}
+
+form select[multiple] option {
+  padding: 6px 10px;
+  border-radius: var(--jsf-radius-sm);
+}
+
+/* --- range --- */
+form [data-widget="range"] input {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  accent-color: var(--jsf-accent);
+}
+
+/* --- checkbox / radio (single boolean row) ---
+   Row has <input> then <label>; render them inline. */
+form [data-widget="checkbox"][data-type="boolean"] {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+form [data-widget="checkbox"][data-type="boolean"] > input {
+  width: auto;
+  margin: 0;
+  box-shadow: none;
+  accent-color: var(--jsf-accent);
+}
+
+form [data-widget="checkbox"][data-type="boolean"] > label {
+  font-weight: 500;
+  margin: 0;
+}
+
+/* --- enum groups: radios or multi-checkboxes --- */
+form fieldset[data-variant="group"] {
+  border: 1px solid var(--jsf-border);
+  border-radius: var(--jsf-radius);
+  background: var(--jsf-surface);
+  padding: 10px 14px 12px;
+  box-shadow: var(--jsf-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+form fieldset[data-variant="group"] > legend {
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+form fieldset[data-variant="group"] > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: var(--jsf-radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background 120ms ease;
+}
+
+form fieldset[data-variant="group"] > label:hover {
+  background: var(--jsf-accent-bg);
+}
+
+form fieldset[data-variant="group"] > label > input {
+  width: auto;
+  margin: 0;
+  box-shadow: none;
+  accent-color: var(--jsf-accent);
+}
+
+/* Horizontal flow for enum groups with 4 or fewer visible children */
+form fieldset[data-variant="group"] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+form fieldset[data-variant="group"] > legend {
+  flex-basis: 100%;
+  margin-bottom: 2px;
+}
+
+form fieldset[data-variant="group"] > small {
+  flex-basis: 100%;
+}
+
+/* --- nested object blocks --- */
+form fieldset[data-variant="object"] {
+  border: 1px solid var(--jsf-border);
+  border-radius: var(--jsf-radius);
+  background: var(--jsf-surface-2);
+  padding: 14px 16px 16px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+form fieldset[data-variant="object"] > legend {
+  padding: 0 6px;
+  margin-left: -6px;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--jsf-muted);
+}
+
+/* --- submit buttons placed alongside the form --- */
+form button[type="submit"] {
+  align-self: flex-start;
+  background: var(--jsf-accent);
+  color: white;
+  border: 1px solid var(--jsf-accent);
+  border-radius: var(--jsf-radius-sm);
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--jsf-shadow);
+  transition: filter 120ms ease, transform 60ms ease;
+}
+
+form button[type="submit"]:hover {
+  filter: brightness(1.05);
+}
+
+form button[type="submit"]:active {
+  transform: translateY(1px);
+}

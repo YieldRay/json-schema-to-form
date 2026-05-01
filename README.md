@@ -1,28 +1,25 @@
 # json-schema-to-form
 
-Generate HTML form markup from JSON Schema.
+Generate HTML form markup from a JSON Schema, for use with [Hono](https://hono.dev/) (JSX) or as plain HTML strings.
 
-## What it does
-
-- Render a JSON Schema to form controls (any valid JSON Schema is supported)
-  - Use as JSX components (`RenderSchemaToHonoForm`, `RenderSchemaToHonoElements`)
-  - Or produce plain strings (`convertSchemaToFormString`, `convertSchemaToString`)
-- Normalize `FormData` into a nested object (`normalizeFormData`)
+- Render a schema as JSX components or as an HTML string
+- Normalize submitted `FormData` into a nested object (dotted keys → nested, repeated keys → arrays)
+- Bring your own validation (Ajv, Zod, etc.)
 
 ## Install
 
-Install the library (add `zod` only if you plan to derive JSON Schema from Zod, and `ajv` only if you implement validation yourself):
-
 ```bash
 npm i json-schema-to-form hono
-# Optional:
-npm i zod
-npm i ajv
+# Optional peers:
+npm i zod   # to derive JSON Schema from Zod via z.toJSONSchema
+npm i ajv   # if you plan to validate server-side
 ```
+
+`hono` is required at runtime — this library outputs `hono/jsx` elements.
 
 ## Quick start
 
-Render a form string from JSON Schema:
+### From a plain JSON Schema
 
 ```ts
 import {
@@ -50,7 +47,21 @@ const schema = {
   },
 } satisfies ObjectSchema;
 
-// Equivalent with Zod (optional):
+const html: string = convertSchemaToFormString(schema, {
+  method: "post",
+  action: "/submit",
+});
+```
+
+### From a Zod schema (optional)
+
+```ts
+import { z } from "zod";
+import {
+  convertSchemaToFormString,
+  type ObjectSchema,
+} from "json-schema-to-form";
+
 const S = z.object({
   url: z.url(),
   method: z.enum(["GET", "POST"]).default("POST").meta({ uiWidget: "select" }),
@@ -59,26 +70,24 @@ const S = z.object({
     age: z.number().min(0).max(120).meta({ uiWidget: "range" }),
   }),
 });
-const schema = z.toJSONSchema(S) as ObjectSchema;
 
-const html: string = convertSchemaToFormString(schema, {
-  method: "post",
-  action: "/submit",
-});
+const html = convertSchemaToFormString(
+  z.toJSONSchema(S) as ObjectSchema,
+  { method: "post", action: "/submit" }
+);
 ```
 
-Use directly as JSX with Hono:
+### As a JSX component with Hono
 
 ```tsx
 import { Hono } from "hono";
-import { html } from "hono/html";
 import {
   RenderSchemaToHonoForm,
-  RenderSchemaToHonoElements,
   type ObjectSchema,
 } from "json-schema-to-form";
 
 const app = new Hono();
+
 const schema: ObjectSchema = {
   type: "object",
   properties: {
@@ -89,65 +98,177 @@ const schema: ObjectSchema = {
 
 app.get("/", (c) =>
   c.html(
-    html`<html>
+    <html>
       <body>
-        ${html`${(
-          <RenderSchemaToHonoForm
-            schema={schema}
-            method="post"
-            action="/submit"
-          >
-            <button type="submit">Submit</button>
-          </RenderSchemaToHonoForm>
-        )}`}
+        <RenderSchemaToHonoForm schema={schema} method="post" action="/submit">
+          <button type="submit">Submit</button>
+        </RenderSchemaToHonoForm>
       </body>
-    </html>`
+    </html>
   )
 );
-
-// If you prefer not use JSX:
-const htmlString: string = RenderSchemaToHonoElements({
-  schema,
-  method: "post",
-  action: "/submit",
-}).toString();
 ```
 
-Normalize submitted data (validation is app-owned):
+`RenderSchemaToHonoForm` accepts every standard `<form>` attribute
+(`method`, `action`, `enctype`, `class`, …) plus `schema`. Any children are
+rendered inside the form, after the generated fields.
+
+### Handling submissions
 
 ```ts
 import { normalizeFormData } from "json-schema-to-form";
 
 app.post("/submit", async (c) => {
   const fd = await c.req.formData();
-  const input = normalizeFormData(fd);
+  const input = normalizeFormData(fd); // nested object
+  // validate `input` with Ajv, Zod, or your validator of choice
 });
-
-// If you need validation, wire up Ajv yourself (not exported by this package)
-// Example: see `src/validate.ts` in this repo for a utility you can copy.
 ```
+
+`normalizeFormData` rules:
+- Dotted keys such as `user.name` become nested objects (via `flat.unflatten`).
+- Repeated keys (e.g. two checkboxes with the same `name`) collapse to arrays.
+- `File` values are passed through as-is; serializing them to JSON is up to you.
 
 ## Schema metadata
 
-You can influence rendering via JSON Schema metadata (when using `zod`, attach via `.meta`):
+Three annotations influence rendering. Attach them directly on the JSON Schema
+(or via `.meta({ ... })` when working with Zod):
 
-- `uiWidget: string` – preferred input widget, e.g., `textarea`, `select`, `radio`, `range`.
-- `uiName: string` – displayed label text; falls back to the property key.
-- `description: string` – used for `title` or hint text where appropriate.
+| Key           | Purpose                                                      |
+| ------------- | ------------------------------------------------------------ |
+| `uiWidget`    | Preferred control; see matrix below                          |
+| `uiName`      | Label text; defaults to the property key                     |
+| `description` | Standard JSON Schema field; rendered as a `<small>` hint linked via `aria-describedby` |
+
+### Widget matrix
+
+| Schema                                  | Default control            | With `uiWidget: "select"` | With `uiWidget: "textarea"` | With `uiWidget: "range"` |
+| --------------------------------------- | -------------------------- | ------------------------- | --------------------------- | ------------------------ |
+| `string`                                | `<input type="text">`      | —                         | `<textarea>`                | —                        |
+| `string` + `format` ¹                   | typed `<input>`            | —                         | —                           | —                        |
+| `string` + `enum`                       | radio group                | `<select>`                | —                           | —                        |
+| `number` / `integer`                    | `<input type="number">`    | —                         | —                           | `<input type="range">`   |
+| `boolean`                               | `<input type="checkbox">`  | —                         | —                           | —                        |
+| `array` + `items.enum`                  | checkbox group             | `<select multiple>`       | —                           | —                        |
+| `object`                                | nested `<fieldset>`        | —                         | —                           | —                        |
+
+¹ Supported formats: `uri` → `url`, `email` → `email`, `date-time-local` →
+`datetime-local`, `time-local` → `time`.
+
+JSON Schema `default` values are reflected as `value`/`selected`/`checked`
+attributes (including array defaults for multi-selects and checkbox groups).
+
+## Generated DOM / styling
+
+The library emits **no `class` attributes** — the output is styled through
+tag selectors and `data-*` hooks, so it never collides with your project's
+CSS (Tailwind, Bulma, scoped styles, whatever).
+
+```html
+<div data-name="user.age" data-type="integer" data-widget="range"
+     data-required="true">
+  <label for="user-age">age</label>
+  <input id="user-age" name="user.age" type="range"
+         min="0" max="120" step="1"
+         required aria-required="true" aria-describedby="user-age-hint">
+  <small id="user-age-hint">age must be 0-120</small>
+</div>
+```
+
+Shapes by widget:
+
+- **Scalar** (text / number / textarea / select / url / email / date / time): a `<div>` row containing `<label>` + a single control (`<input>` / `<select>` / `<textarea>`), optionally followed by `<small>` for the description.
+- **Single checkbox** (boolean): a `<div>` row with `<input type="checkbox">` **before** `<label>` (control-first, so the label reads naturally next to the checkbox).
+- **Enum group** (radio / checkbox-array): a `<fieldset data-variant="group">` containing `<legend>` + one `<label><input><span>text</span></label>` per option.
+- **Nested object**: a `<fieldset data-variant="object">` with `<legend>` and child rows rendered as direct children.
+
+Addressable hooks on every row:
+
+| Attribute              | When                                      | Example selector                       |
+| ---------------------- | ----------------------------------------- | -------------------------------------- |
+| `data-name`            | Always (dotted path, e.g. `user.age`)     | `[data-name="user.age"]`               |
+| `data-type`            | Always (JSON Schema type)                 | `[data-type="integer"]`                |
+| `data-widget`          | Always (resolved widget)                  | `[data-widget="range"]`                |
+| `data-required`        | Row flagged by JSON Schema `required`     | `[data-required]`                      |
+| `data-variant="group"` | Radio / checkbox groups (on `<fieldset>`) | `fieldset[data-variant="group"]`       |
+| `data-variant="object"`| Nested object rows (on `<fieldset>`)      | `fieldset[data-variant="object"]`      |
+
+`name` stays dotted (preserved for `normalizeFormData`); `id` / `for` /
+`aria-describedby` replace dots with dashes to stay CSS-selector-safe
+(`#user-name`, not `#user.name`, which would parse as "id `user` and class
+`name`").
+
+### Minimal styling example
+
+```css
+/* Every row, selected without any class */
+form [data-name]                              { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+form [data-name] > label,
+form [data-name] > legend                     { font-weight: 600; }
+form [data-name] > small                      { color: #666; font-size: 0.875em; }
+form [data-required] > label::after,
+form [data-required] > legend::after          { content: " *"; color: crimson; }
+
+/* Widget-specific tweaks */
+form [data-widget="range"] input              { accent-color: #2563eb; }
+form [data-widget="textarea"] textarea        { min-height: 6em; }
+
+/* Control-first layout for single checkboxes */
+form [data-widget="checkbox"][data-type="boolean"] { flex-direction: row; align-items: center; gap: 6px; }
+
+/* Options in radio / checkbox groups */
+form fieldset[data-variant="group"] > label   { display: inline-flex; gap: 4px; align-items: center; margin-right: 12px; }
+```
+
+### Accessibility notes
+
+- `required` fields also set `aria-required="true"` on the control (or on the
+  `<fieldset>` for groups).
+- Radio groups mark only the first radio with `required`; per the HTML spec
+  this makes the whole group required without triggering per-input validation
+  messages.
+- Checkbox groups rely on `aria-required` on the `<fieldset>` and app-side
+  validation; marking individual checkboxes `required` would mean "this exact
+  one must be checked", which is rarely what callers want.
+- Descriptions are real text via `<small>`, wired up with `aria-describedby`,
+  rather than `title` tooltips.
+
+Typed helper for metadata (purely optional):
+
+```ts
+import { defineMeta } from "json-schema-to-form";
+
+const meta = defineMeta({ uiWidget: "select", multiple: false });
+```
 
 ## API
 
-- `convertSchemaToString(schema)` – render fields (no `<form>`) and return a string
-- `convertSchemaToFormString(schema, props?)` – render a complete `<form>` string
-- `RenderSchemaToHonoForm` – JSX component rendering a `<form>` and fields
-- `RenderSchemaToHonoElements` – JSX fragment rendering only fields
-- `normalizeFormData(formData)` – turn `FormData` into a nested object
+| Export                        | Description                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `convertSchemaToString`       | Render fields only (no `<form>` wrapper) and return a string                    |
+| `convertSchemaToFormString`   | Render a complete `<form>` string                                               |
+| `RenderSchemaToHonoForm`      | JSX component: `<form>` wrapping generated fields and any children              |
+| `RenderSchemaToHonoElements`  | JSX fragment of just the fields; accepts `schema`, `parent`, `getID`            |
+| `normalizeFormData`           | Convert `FormData` to a nested plain object                                     |
+| `defineMeta`                  | Identity helper for typing a `Meta` object                                      |
+| `ObjectSchema`, `Meta` (types) | Minimal root schema type and widget-metadata union                             |
 
-Validation helpers are NOT exported by this package.
+`RenderSchemaToHonoElements` also accepts `getID?: (path) => string` for
+customizing the `id` attribute of generated controls (defaults to the dotted
+path, e.g. `user.name`).
+
+Validation helpers are intentionally **not** exported. If you need a
+working Ajv wrapper, see `src/validate.ts` in this repository — it is not
+shipped in the published package, so copy it into your project.
 
 ## Limitations
 
-- Root schema must be `{ type: "object", properties }`.
-- Arrays must specify `items.enum`; arrays of `object` or `array` are not supported.
-- Supported string formats: `uri`, `email`, `date-time-local`, `time-local`.
-- File inputs cannot be represented in JSON; validation may need custom handling.
+- Root schema must be `{ type: "object", properties: {...} }`.
+- Arrays must use `items.enum`; arrays of `object` or `array` are not supported.
+- Only the following `string` formats map to typed inputs: `uri`, `email`, `date-time-local`, `time-local`. Other values of `format` fall through to a plain text input.
+- File inputs are not generated from schema; add them manually and they will round-trip through `normalizeFormData` as `File` values.
+
+## License
+
+MIT © YieldRay

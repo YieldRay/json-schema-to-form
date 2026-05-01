@@ -1,0 +1,209 @@
+/* Utility-flavored stylesheet.
+
+   Demonstrates that you can achieve a Tailwind-ish look purely through
+   attribute selectors, without adding class names to the library's output
+   and without a build step. */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+/* Dissolve the docs preview card so the form's own card styling is the only
+   visible container. Scoped to the preview wrapper used by the docs shell. */
+section.preview:has(form) {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+form {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #0f172a;
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: 18px 20px;
+  background: #fff;
+  padding: 28px 32px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06),
+              0 2px 4px rgba(15, 23, 42, 0.04);
+}
+
+/* Every row spans 2 columns using a nested subgrid-style layout */
+form [data-name] {
+  display: contents;
+}
+
+/* Labels sit in column 1 */
+form [data-name] > label,
+form [data-name] > legend {
+  grid-column: 1;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #334155;
+  padding-top: 8px;
+}
+
+/* Controls in column 2 */
+form [data-name] > input,
+form [data-name] > select,
+form [data-name] > textarea {
+  grid-column: 2;
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  width: 100%;
+}
+
+form [data-name] > input:focus,
+form [data-name] > select:focus,
+form [data-name] > textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
+form [data-name] > textarea {
+  min-height: 6em;
+  resize: vertical;
+}
+
+form [data-name] > small {
+  grid-column: 2;
+  color: #64748b;
+  font-size: 0.8125rem;
+  margin-top: -4px;
+}
+
+/* Required indicator — only the field's own label/legend */
+form [data-required]:not([data-variant="group"]) > label::after,
+form [data-required] > legend::after {
+  content: " *";
+  color: #e11d48;
+}
+
+/* Boolean rows: override `display: contents` so the whole row is its own
+   flex cell that lives in col 2, with input + label side by side. */
+form [data-widget="checkbox"][data-type="boolean"] {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  gap: 10px;
+}
+
+form [data-widget="checkbox"][data-type="boolean"] > input {
+  width: auto;
+  accent-color: #6366f1;
+  margin: 0;
+}
+
+form [data-widget="checkbox"][data-type="boolean"] > label {
+  padding: 0;
+  font-weight: 500;
+}
+
+/* Enum groups: span both columns, use internal flex layout.
+   Legend gets col-1-like sizing; pills wrap naturally after it. */
+form fieldset[data-variant="group"] {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 20px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+form fieldset[data-variant="group"] > legend {
+  flex: 0 0 160px;
+  padding-top: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+form fieldset[data-variant="group"] > label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 12px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+form fieldset[data-variant="group"] > label:hover {
+  background: #e2e8f0;
+}
+
+form fieldset[data-variant="group"] > label:has(input:checked) {
+  background: #6366f1;
+  color: #fff;
+}
+
+form fieldset[data-variant="group"] > label > input {
+  accent-color: #fff;
+  width: auto;
+}
+
+form fieldset[data-variant="group"] > small {
+  flex-basis: 100%;
+  margin-left: calc(160px + 20px); /* legend flex-basis + gap */
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+
+/* Nested object: spans both columns and uses its own subgrid */
+form fieldset[data-variant="object"] {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: 18px 20px;
+  padding: 18px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #fafbfd;
+  margin: 0;
+}
+
+form fieldset[data-variant="object"] > legend {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 0;
+}
+
+/* Range widget polish */
+form [data-widget="range"] > input {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: #6366f1;
+}
+
+/* Submit */
+form button[type="submit"] {
+  grid-column: 2;
+  justify-self: start;
+  padding: 10px 20px;
+  background: #6366f1;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 120ms ease;
+}
+
+form button[type="submit"]:hover { filter: brightness(1.05); }

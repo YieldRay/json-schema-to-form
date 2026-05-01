@@ -31,6 +31,5 @@ export function validateFormData<T extends { type: "object" }>(
   formData: FormData
 ) {
   const data = normalizeFormData(formData);
-  console.log(schema);
   return validateJSON(schema, data);
 }

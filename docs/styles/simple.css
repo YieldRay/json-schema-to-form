@@ -1,0 +1,14 @@
+/* Simple mode — a handful of lines of classless CSS.
+   Only tag + a couple of data-* selectors. No variables, no layout tricks.
+   If this is enough to look reasonable, the raw HTML is well structured. */
+
+form        { max-width: 480px; font: 14px/1.4 system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; }
+[data-name] { display: flex; flex-direction: column; gap: 4px; }
+label, legend { font-weight: 600; }
+input, select, textarea { font: inherit; padding: 6px 8px; border: 1px solid #bbb; border-radius: 4px; }
+fieldset    { border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+small       { color: #666; }
+[data-widget="checkbox"][data-type="boolean"] { flex-direction: row; align-items: center; }
+[data-widget="checkbox"][data-type="boolean"] input { width: auto; }
+[data-required]:not([data-variant="group"]) > label::after,
+[data-required] > legend::after { content: " *"; color: #c00; }

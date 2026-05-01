@@ -9,8 +9,6 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "erasableSyntaxOnly": true,
-    "rootDir": "src",
-    "outDir": "dist",
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   }
